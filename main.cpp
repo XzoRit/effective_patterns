@@ -1,14 +1,2 @@
-#include <iostream>
-#include <functional>
-#include <vector>
-#include <algorithm>
-#include <string>
-#include <memory>
-#include <map>
-
-using namespace std;
-
-int main(int argc, char* argv[])
-{
-    return 0;
-}
+#define BOOST_TEST_MODULE test_effective_patterns
+#include <boost/test/included/unit_test.hpp>
