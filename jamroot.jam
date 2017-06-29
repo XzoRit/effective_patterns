@@ -1,0 +1,18 @@
+import boost ;
+
+boost.use-project ;
+
+project
+    :
+    :
+    : requirements <cxxflags>-std=c++1z
+    ;
+
+import testing ;
+
+run test_effective_patterns.cpp main.cpp
+    : <testing.arg>"--log_level=message" "--log_sink=stdout"
+    :
+    : <use>/boost//headers
+    : test_effective_stl
+    ;
