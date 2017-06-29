@@ -1,0 +1,45 @@
+#+STARTUP: showeverything
+#+OPTIONS: ^:{}
+
+#+OPTIONS: reveal_title_slide:nil
+#+OPTIONS: reveal_slide_number:nil
+#+OPTIONS: reveal_progress
+#+OPTIONS: num:nil 
+#+REVEAL_HLEVEL:1
+#+REVEAL_PLUGINS: (highlight)
+#+REVEAL_THEME: black
+#+REVEAL_TRANS: none
+
+* effective patterns
+
+* content
+- classic vs c++
+- patterns and boost
+- conclusion
+
+* gof patterns
+- [[https://en.wikipedia.org/wiki/Software_design_pattern][design patterns]]
+- [[http://shop.oreilly.com/product/9780596007126.do?sortby=publicationDate][head first design patterns]]
+- [[http://www.cs.wustl.edu/~schmidt/POSA/][posa]]
+- [[http://antipatterns.com/][antipatterns]]
+- [[https://sourcemaking.com/][sourcemaking]]
+
+* examples
+- abstract factory
+- chain
+- command
+- observer
+- strategy
+
+* boost.patterns
+- flyweight
+- state
+
+* coffeemachine
+- takes orders (coffee, tea)
+- visualizes progress
+- notifies when oders are ready
+- prints a receipt
+
+* strategy
+
