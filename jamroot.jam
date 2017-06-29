@@ -13,6 +13,6 @@ import testing ;
 run test_effective_patterns.cpp main.cpp
     : <testing.arg>"--log_level=message" "--log_sink=stdout"
     :
-    : <use>/boost//headers
+    : <use>/boost//headers <include>Fakeit/single_header/boost
     : test_effective_stl
     ;
