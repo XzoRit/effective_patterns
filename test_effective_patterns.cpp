@@ -1,3 +1,5 @@
+#include <functional>
+#include <string>
 #include <memory>
 
 namespace coffee_machine::v1
@@ -9,6 +11,7 @@ class recipe
 public:
     virtual int amount_water_ml() = 0;
     virtual int powder_gramm() = 0;
+    virtual ~recipe() {}
 };
 class coffee : public recipe
 {
@@ -38,10 +41,46 @@ namespace beverage
 class beverage
 {
 public:
-    beverage(recipe::recipe& recipe)
+    beverage(recipe::recipe* recipe)
         : _recipe{recipe}
     {
     }
+    ~beverage()
+    {
+        delete _recipe;
+    }
+    void prepare()
+    {
+        boil_water(_recipe->amount_water_ml());
+        brew(_recipe->powder_gramm());
+        pour_into_cup();
+    }
+private:
+    void boil_water(int) {}
+    void brew(int) {}
+    void pour_into_cup() {}
+    recipe::recipe* _recipe;
+};
+}
+}
+namespace coffee_machine::v2
+{
+namespace recipe
+{
+struct recipe
+{
+    std::function<int()> amount_water_ml;
+    std::function<int()> powder_gramm;
+};
+}
+namespace beverage
+{
+class beverage
+{
+public:
+    beverage(recipe::recipe recipe)
+        : _recipe{recipe}
+    {}
     void prepare()
     {
         boil_water(_recipe.amount_water_ml());
@@ -52,34 +91,41 @@ private:
     void boil_water(int) {}
     void brew(int) {}
     void pour_into_cup() {}
-    recipe::recipe& _recipe;
+private:
+    recipe::recipe _recipe;
 };
 }
-}
-namespace coffee_machine::v2
-{
 }
 namespace coffee_machine::v3
 {
 }
 
 #include <boost/test/unit_test.hpp>
-#include <fakeit.hpp>
 
-using namespace fakeit;
-
-BOOST_AUTO_TEST_CASE(recipes)
+BOOST_AUTO_TEST_CASE(v1_recipes)
 {
     using namespace coffee_machine::v1;
+}
 
-    Mock<recipe::recipe> recipe{};
-    Fake(Method(recipe, amount_water_ml));
-    Fake(Method(recipe, powder_gramm));
+BOOST_AUTO_TEST_CASE(v2_recipes)
+{
+    using namespace coffee_machine::v2;
 
-    beverage::beverage b{recipe.get()};
+    std::string actual_calls{};
+    beverage::beverage b{{
+        [&]()
+        {
+            actual_calls += "a";
+            return 0;
+        },
+        [&]()
+        {
+            actual_calls += "b";
+            return 0;
+        }
+    }};
 
     b.prepare();
 
-    Verify(Method(recipe, amount_water_ml)).Exactly(Once);
-    Verify(Method(recipe, powder_gramm)).Exactly(Once);
+    BOOST_CHECK("ab" == actual_calls);
 }
