@@ -1,0 +1,2 @@
+-I../boost
+-std=c++1y
