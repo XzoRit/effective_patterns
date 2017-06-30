@@ -143,6 +143,26 @@ private:
     recipe::recipe _recipe;
 };
 }
+    namespace order
+    {
+        using order = std::function<void()>;
+    }
+    class coffee_machine
+    {
+    public:
+        void request(order::order order)
+            {
+                _orders.push_back(order);
+            }
+        void start()
+            {
+                for(auto&& o : _orders) o();
+                _orders.clear();
+            }
+    private:
+        using orders = std::vector<order::order>;
+        orders _orders;
+    };
 }
 namespace coffee_machine::v3
 {
@@ -154,7 +174,6 @@ BOOST_AUTO_TEST_CASE(v1_recipes)
 {
     using namespace coffee_machine::v1;
 }
-
 BOOST_AUTO_TEST_CASE(v1_orders)
 {
     using namespace coffee_machine::v1;
@@ -183,7 +202,6 @@ BOOST_AUTO_TEST_CASE(v1_orders)
     // o is actually already deleted
     BOOST_CHECK(o->_called);
 }
-
 BOOST_AUTO_TEST_CASE(v2_recipes)
 {
     using namespace coffee_machine::v2;
@@ -205,4 +223,18 @@ BOOST_AUTO_TEST_CASE(v2_recipes)
     b.prepare();
 
     BOOST_CHECK("ab" == actual_calls);
+}
+BOOST_AUTO_TEST_CASE(v2_orders)
+{
+    using namespace coffee_machine::v2;
+
+    coffee_machine::v2::coffee_machine c{};
+    std::string actual_calls{};
+
+    c.request([&](){ actual_calls += "o"; });
+    c.request([&](){ actual_calls += "o"; });
+
+    c.start();
+
+    BOOST_CHECK("oo" == actual_calls);
 }
