@@ -1,6 +1,7 @@
 #include <functional>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace coffee_machine::v1
 {
@@ -11,7 +12,7 @@ class recipe
 public:
     virtual int amount_water_ml() = 0;
     virtual int powder_gramm() = 0;
-    virtual ~recipe() {}
+    virtual ~recipe() = default;
 };
 class coffee : public recipe
 {
