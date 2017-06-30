@@ -41,5 +41,15 @@
 - notifies when oders are ready
 - prints a receipt
 
+* recipe
+- heat water
+- beverage powder
+- pour into cup
+
 * strategy
 
+* orders
+- list of beverages
+- work of list
+
+* command
