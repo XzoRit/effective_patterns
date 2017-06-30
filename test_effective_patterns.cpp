@@ -258,7 +258,16 @@ BOOST_AUTO_TEST_CASE(v2_orders)
 {
     using namespace coffee_machine::v2;
 
+    beverage::beverage coffee{recipe::coffee};
+    beverage::beverage tea{recipe::tea};
+
     coffee_machine::v2::coffee_machine c{};
+
+    c.request([=]() mutable { coffee.prepare(); });
+    c.request([=]() mutable {    tea.prepare(); });
+
+    c.start();
+
     std::string actual_calls{};
 
     c.request([&](){ actual_calls += "o"; });
