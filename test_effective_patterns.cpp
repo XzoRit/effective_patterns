@@ -120,13 +120,35 @@ struct recipe
     std::function<int()> amount_water_ml;
     std::function<int()> powder_gramm;
 };
+const recipe coffee
+{
+    []()
+    {
+        return 150;
+    },
+    []()
+    {
+        return 100;
+    }
+};
+const recipe tea
+{
+    []()
+    {
+        return 200;
+    },
+    []()
+    {
+        return 150;
+    }
+};
 }
 namespace beverage
 {
 class beverage
 {
 public:
-    beverage(recipe::recipe recipe)
+    beverage(const recipe::recipe& recipe)
         : _recipe{recipe}
     {}
     void prepare()
