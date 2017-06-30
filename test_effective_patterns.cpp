@@ -195,6 +195,41 @@ namespace coffee_machine::v3
 BOOST_AUTO_TEST_CASE(v1_recipes)
 {
     using namespace coffee_machine::v1;
+
+    recipe::recipe* coffee_recipe{new recipe::coffee{}};
+    recipe::recipe*    tea_recipe{new recipe::tea   {}};
+
+    beverage::beverage* coffee{new beverage::beverage{coffee_recipe}};
+    beverage::beverage*    tea{new beverage::beverage{   tea_recipe}};
+
+    using beverages = std::vector<beverage::beverage*>;
+    beverages bs{coffee, tea};
+
+    for(auto && b : bs) b->prepare();
+    bs.clear();
+
+    struct mock_recipe : public recipe::recipe
+    {
+        int amount_water_ml() override
+        {
+            water_called = true;
+            return 0;
+        }
+        int powder_gramm() override
+        {
+            powder_called = true;
+            return 0;
+        }
+        bool water_called{false};
+        bool powder_called{false};
+    };
+    auto* mocked_recipe{new mock_recipe{}};
+    beverage::beverage mocked_beverage{mocked_recipe};
+
+    mocked_beverage.prepare();
+
+    BOOST_CHECK(mocked_recipe->water_called);
+    BOOST_CHECK(mocked_recipe->powder_called);
 }
 BOOST_AUTO_TEST_CASE(v1_orders)
 {
