@@ -228,6 +228,14 @@ BOOST_AUTO_TEST_CASE(v2_recipes)
 {
     using namespace coffee_machine::v2;
 
+    beverage::beverage coffee{recipe::coffee};
+    beverage::beverage tea{recipe::tea};
+
+    using beverages = std::vector<beverage::beverage>;
+    beverages bs{coffee, tea};
+
+    for(auto&& b : bs) b.prepare();
+
     std::string actual_calls{};
     beverage::beverage b{{
         [&]()
