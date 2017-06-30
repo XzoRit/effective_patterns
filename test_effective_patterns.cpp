@@ -154,6 +154,35 @@ BOOST_AUTO_TEST_CASE(v1_recipes)
     using namespace coffee_machine::v1;
 }
 
+BOOST_AUTO_TEST_CASE(v1_orders)
+{
+    using namespace coffee_machine::v1;
+
+    coffee_machine::v1::coffee_machine c{};
+
+    auto t{new recipe::tea{}};
+    auto tea{new beverage::beverage{t}};
+
+    c.request(new order::beverage{tea});
+    c.start();
+
+    struct mock_order : public order::order
+    {
+        void execute() override
+            {
+                _called = true;
+            }
+        bool _called{false};
+    };
+
+    auto o{new mock_order{}};
+    c.request(o);
+    c.start();
+
+    // o is actually already deleted
+    BOOST_CHECK(o->_called);
+}
+
 BOOST_AUTO_TEST_CASE(v2_recipes)
 {
     using namespace coffee_machine::v2;
