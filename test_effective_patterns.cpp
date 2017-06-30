@@ -62,6 +62,53 @@ private:
     recipe::recipe* _recipe;
 };
 }
+namespace order
+{
+class order
+{
+public:
+    virtual void execute() = 0;
+    virtual ~order() = default;
+};
+class beverage : public order
+{
+public:
+    beverage(v1::beverage::beverage* beverage)
+        : _beverage{beverage}
+    {}
+    virtual ~beverage()
+    {
+        delete _beverage;
+    }
+    void execute() override
+    {
+        _beverage->prepare();
+    }
+private:
+    v1::beverage::beverage* _beverage;
+};
+}
+class coffee_machine
+{
+public:
+    void request(order::order* order)
+        {
+            _orders.push_back(order);
+        }
+    void start()
+        {
+            for(auto it{std::begin(_orders)}; it != std::end(_orders); ++it)
+            {
+                (*it)->execute();
+                delete (*it);
+                (*it) = nullptr;
+            }
+            _orders.clear();
+        }
+private:
+    using orders = std::vector<order::order*>;
+    orders _orders;
+};
 }
 namespace coffee_machine::v2
 {
