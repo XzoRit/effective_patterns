@@ -12,7 +12,7 @@ class recipe
 public:
     virtual int amount_water_ml() = 0;
     virtual int powder_gramm() = 0;
-    virtual ~recipe() = default;
+    virtual ~recipe() noexcept = default;
 };
 class coffee : public recipe
 {
@@ -69,7 +69,7 @@ class order
 {
 public:
     virtual void execute() = 0;
-    virtual ~order() = default;
+    virtual ~order() noexcept = default;
 };
 class beverage : public order
 {
@@ -89,6 +89,14 @@ private:
     v1::beverage::beverage* _beverage;
 };
 }
+class order_state_observer
+{
+public:
+    virtual void started(int num_of_orders) = 0;
+    virtual void progress(int in_percent) = 0;
+    virtual void finished() = 0;
+    virtual ~order_state_observer() noexcept = default;
+};
 class coffee_machine
 {
 public:
@@ -98,17 +106,54 @@ public:
         }
     void start()
         {
-            for(auto it{std::begin(_orders)}; it != std::end(_orders); ++it)
+            const auto num_orders{std::size(_orders)};
+            int counter{};
+            for(auto it{std::begin(_orders)}; it != std::end(_orders); ++it, ++counter)
             {
+                this->notify_progress(counter / num_orders);
                 (*it)->execute();
                 delete (*it);
                 (*it) = nullptr;
             }
             _orders.clear();
+            this->notify_finished();
+        }
+    void add_order_state_observer(order_state_observer* observer)
+        {
+            _order_state_observers.push_back(observer);
         }
 private:
+    void notify_start(int num_of_orders)
+        {
+            for(auto it{std::begin(_order_state_observers)};
+                it != std::end(_order_state_observers);
+                ++it)
+            {
+                (*it)->started(num_of_orders);
+            }
+        }
+    void notify_progress(int percent)
+        {
+            for(auto it{std::begin(_order_state_observers)};
+                it != std::end(_order_state_observers);
+                ++it)
+            {
+                (*it)->progress(percent);
+            }
+        }
+    void notify_finished()
+        {
+            for(auto it{std::begin(_order_state_observers)};
+                it != std::end(_order_state_observers);
+                ++it)
+            {
+                (*it)->finished();
+            }
+        }
     using orders = std::vector<order::order*>;
     orders _orders;
+    using order_state_observers = std::vector<order_state_observer*>;
+    order_state_observers _order_state_observers;
 };
 }
 namespace coffee_machine::v2
