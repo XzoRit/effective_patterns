@@ -53,3 +53,10 @@
 - work of list
 
 * command
+
+* progress
+- started preparing beverages
+- in progress
+- finished
+
+* observer
