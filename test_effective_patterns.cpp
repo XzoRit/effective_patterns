@@ -1,4 +1,5 @@
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -101,60 +102,82 @@ class coffee_machine
 {
 public:
     void request(order::order* order)
-        {
-            _orders.push_back(order);
-        }
+    {
+        _orders.push_back(order);
+    }
     void start()
+    {
+        const auto num_orders{std::size(_orders)};
+        this->notify_start(num_orders);
+
+        int counter{};
+        for(auto it{std::begin(_orders)}; it != std::end(_orders); ++it, ++counter)
         {
-            const auto num_orders{std::size(_orders)};
-            int counter{};
-            for(auto it{std::begin(_orders)}; it != std::end(_orders); ++it, ++counter)
-            {
-                this->notify_progress(counter / num_orders);
-                (*it)->execute();
-                delete (*it);
-                (*it) = nullptr;
-            }
-            _orders.clear();
-            this->notify_finished();
+            (*it)->execute();
+            delete(*it);
+            (*it) = nullptr;
+            this->notify_progress((counter / (float)num_orders) * 100);
         }
+
+        _orders.clear();
+        this->notify_finished();
+    }
     void add_order_state_observer(order_state_observer* observer)
-        {
-            _order_state_observers.push_back(observer);
-        }
+    {
+        _order_state_observers.push_back(observer);
+    }
 private:
     void notify_start(int num_of_orders)
-        {
-            for(auto it{std::begin(_order_state_observers)};
+    {
+        for(auto it{std::begin(_order_state_observers)};
                 it != std::end(_order_state_observers);
                 ++it)
-            {
-                (*it)->started(num_of_orders);
-            }
+        {
+            (*it)->started(num_of_orders);
         }
+    }
     void notify_progress(int percent)
-        {
-            for(auto it{std::begin(_order_state_observers)};
+    {
+        for(auto it{std::begin(_order_state_observers)};
                 it != std::end(_order_state_observers);
                 ++it)
-            {
-                (*it)->progress(percent);
-            }
+        {
+            (*it)->progress(percent);
         }
+    }
     void notify_finished()
-        {
-            for(auto it{std::begin(_order_state_observers)};
+    {
+        for(auto it{std::begin(_order_state_observers)};
                 it != std::end(_order_state_observers);
                 ++it)
-            {
-                (*it)->finished();
-            }
+        {
+            (*it)->finished();
         }
+    }
     using orders = std::vector<order::order*>;
     orders _orders;
     using order_state_observers = std::vector<order_state_observer*>;
     order_state_observers _order_state_observers;
 };
+namespace view
+{
+class console : public order_state_observer
+{
+public:
+    void started(int num_of_orders) override
+    {
+        std::cout << "started preparing " << num_of_orders << " orders\n";
+    }
+    void progress(int in_percent) override
+    {
+        std::cout << "running " << in_percent << " %\n";
+    }
+    void finished() override
+    {
+        std::cout << "finished\n";
+    }
+};
+}
 }
 namespace coffee_machine::v2
 {
@@ -210,26 +233,26 @@ private:
     recipe::recipe _recipe;
 };
 }
-    namespace order
+namespace order
+{
+using order = std::function<void()>;
+}
+class coffee_machine
+{
+public:
+    void request(order::order order)
     {
-        using order = std::function<void()>;
+        _orders.push_back(order);
     }
-    class coffee_machine
+    void start()
     {
-    public:
-        void request(order::order order)
-            {
-                _orders.push_back(order);
-            }
-        void start()
-            {
-                for(auto&& o : _orders) o();
-                _orders.clear();
-            }
-    private:
-        using orders = std::vector<order::order>;
-        orders _orders;
-    };
+        for(auto && o : _orders) o();
+        _orders.clear();
+    }
+private:
+    using orders = std::vector<order::order>;
+    orders _orders;
+};
 }
 namespace coffee_machine::v3
 {
@@ -291,9 +314,9 @@ BOOST_AUTO_TEST_CASE(v1_orders)
     struct mock_order : public order::order
     {
         void execute() override
-            {
-                _called = true;
-            }
+        {
+            _called = true;
+        }
         bool _called{false};
     };
 
@@ -303,6 +326,52 @@ BOOST_AUTO_TEST_CASE(v1_orders)
 
     // o is actually already deleted
     BOOST_CHECK(o->_called);
+}
+BOOST_AUTO_TEST_CASE(v1_order_state_observers)
+{
+    using namespace coffee_machine::v1;
+
+    {
+        coffee_machine::v1::coffee_machine c{};
+
+        auto t{new recipe::tea{}};
+        auto tea{new beverage::beverage{t}};
+
+        view::console view{};
+        c.add_order_state_observer(&view);
+
+        c.request(new order::beverage{tea});
+        c.start();
+    }
+    {
+        struct mock_observer : public order_state_observer
+        {
+            void started(int num_of_orders) override
+            {
+                _call_order += "s";
+            }
+            void progress(int in_percent) override
+            {
+                _call_order += "p";
+            }
+            void finished() override
+            {
+                _call_order += "f";
+            }
+            std::string _call_order{};
+        };
+
+        mock_observer o{};
+        coffee_machine::v1::coffee_machine c{};
+        auto t{new recipe::tea{}};
+        auto tea{new beverage::beverage{t}};
+
+        c.add_order_state_observer(&o);
+        c.request(new order::beverage{tea});
+        c.start();
+
+        BOOST_CHECK_EQUAL(o._call_order, "spf");
+    }
 }
 BOOST_AUTO_TEST_CASE(v2_recipes)
 {
@@ -314,21 +383,21 @@ BOOST_AUTO_TEST_CASE(v2_recipes)
     using beverages = std::vector<beverage::beverage>;
     beverages bs{coffee, tea};
 
-    for(auto&& b : bs) b.prepare();
+    for(auto && b : bs) b.prepare();
 
     std::string actual_calls{};
     beverage::beverage b{{
-        [&]()
-        {
-            actual_calls += "a";
-            return 0;
-        },
-        [&]()
-        {
-            actual_calls += "b";
-            return 0;
-        }
-    }};
+            [&]()
+            {
+                actual_calls += "a";
+                return 0;
+            },
+            [&]()
+            {
+                actual_calls += "b";
+                return 0;
+            }
+        }};
 
     b.prepare();
 
@@ -343,15 +412,21 @@ BOOST_AUTO_TEST_CASE(v2_orders)
 
     coffee_machine::v2::coffee_machine c{};
 
-    c.request([=]() mutable { coffee.prepare(); });
-    c.request([=]() mutable {    tea.prepare(); });
+    c.request([ = ]() mutable { coffee.prepare(); });
+    c.request([ = ]() mutable {    tea.prepare(); });
 
     c.start();
 
     std::string actual_calls{};
 
-    c.request([&](){ actual_calls += "o"; });
-    c.request([&](){ actual_calls += "o"; });
+    c.request([&]()
+    {
+        actual_calls += "o";
+    });
+    c.request([&]()
+    {
+        actual_calls += "o";
+    });
 
     c.start();
 
