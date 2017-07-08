@@ -1,3 +1,4 @@
+#include <boost/signals2.hpp>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -116,7 +117,7 @@ public:
             (*it)->execute();
             delete(*it);
             (*it) = nullptr;
-            this->notify_progress((counter / (float)num_orders) * 100);
+            this->notify_progress(((float)++counter / num_orders) * 100);
         }
 
         _orders.clear();
@@ -237,22 +238,57 @@ namespace order
 {
 using order = std::function<void()>;
 }
+using namespace boost::signals2;
 class coffee_machine
 {
 public:
+    template<class func_sig>
+    using signal = typename signal_type<func_sig, keywords::mutex_type<dummy_mutex>>::type;
+
+    signal<void(int)> sig_started;
+    signal<void(int)> sig_progress;
+    signal<void(   )> sig_finished;
+
     void request(order::order order)
     {
         _orders.push_back(order);
     }
     void start()
     {
-        for(auto && o : _orders) o();
+        const auto num_orders{std::size(_orders)};
+        sig_started(num_orders);
+
+        auto counter{0};
+        for(auto && o : _orders)
+        {
+            o();
+            sig_progress(((float)++counter / num_orders) * 100);
+        }
         _orders.clear();
+        sig_finished();
     }
 private:
     using orders = std::vector<order::order>;
     orders _orders;
 };
+namespace view
+{
+namespace console
+{
+void started(int num_of_orders)
+{
+    std::cout << "started preparing " << num_of_orders << " orders\n";
+}
+void progress(int in_percent)
+{
+    std::cout << "running " << in_percent << " %\n";
+}
+void finished()
+{
+    std::cout << "finished\n";
+}
+}
+}
 }
 namespace coffee_machine::v3
 {
@@ -348,11 +384,11 @@ BOOST_AUTO_TEST_CASE(v1_order_state_observers)
         {
             void started(int num_of_orders) override
             {
-                _call_order += "s";
+                _call_order += "s" + std::to_string(num_of_orders);
             }
             void progress(int in_percent) override
             {
-                _call_order += "p";
+                _call_order += "p" + std::to_string(in_percent);
             }
             void finished() override
             {
@@ -370,7 +406,7 @@ BOOST_AUTO_TEST_CASE(v1_order_state_observers)
         c.request(new order::beverage{tea});
         c.start();
 
-        BOOST_CHECK_EQUAL(o._call_order, "spf");
+        BOOST_CHECK_EQUAL(o._call_order, "s1p100f");
     }
 }
 BOOST_AUTO_TEST_CASE(v2_recipes)
@@ -431,4 +467,49 @@ BOOST_AUTO_TEST_CASE(v2_orders)
     c.start();
 
     BOOST_CHECK("oo" == actual_calls);
+}
+BOOST_AUTO_TEST_CASE(v2_order_state_observers)
+{
+    using namespace coffee_machine::v2;
+    {
+        beverage::beverage coffee{recipe::coffee};
+        beverage::beverage tea{recipe::tea};
+
+        coffee_machine::v2::coffee_machine c{};
+
+        c.sig_started .connect(view::console::started);
+        c.sig_progress.connect(view::console::progress);
+        c.sig_finished.connect(view::console::finished);
+
+
+        c.request([ = ]() mutable { coffee.prepare(); });
+        c.request([ = ]() mutable {    tea.prepare(); });
+
+        c.start();
+    }
+    {
+        coffee_machine::v2::coffee_machine c{};
+
+        std::string actual_calls{};
+        c.sig_started .connect([&](auto a)
+        {
+            actual_calls += "s" + std::to_string(a);
+        });
+        c.sig_progress.connect([&](auto a)
+        {
+            actual_calls += "p" + std::to_string(a);
+        });
+        c.sig_finished.connect([&]()
+        {
+            actual_calls += "f";
+        });
+
+
+        c.request([]() {});
+        c.request([]() {});
+
+        c.start();
+
+        BOOST_CHECK_EQUAL("s2p50p100f", actual_calls);
+    }
 }
