@@ -54,16 +54,16 @@
 
 * command
 
-* progress
-- started preparing beverages
-- in progress
-- finished
-
-* observer
-
 * wiring
 - map string to prepare-command
 - create beverages
 - either coffee or tea
 
 * factory method
+
+* progress
+- started preparing beverages
+- in progress
+- finished
+
+* observer

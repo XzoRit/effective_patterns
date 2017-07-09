@@ -303,15 +303,15 @@ public:
         {
             beverage::beverage{recipe::coffee} .prepare();
         };
-        _factories["tea"   ] = []()
+        _factories["tea"] = []()
         {
             beverage::beverage{recipe::tea   } .prepare();
         };
     }
     order::order& operator[](const std::string& beverage)
-        {
-            return _factories[beverage];
-        }
+    {
+        return _factories[beverage];
+    }
 private:
     std::map<std::string, order::order> _factories;
 };
@@ -442,6 +442,38 @@ BOOST_AUTO_TEST_CASE(v1_orders)
     // o is actually already deleted
     BOOST_CHECK(o->_called);
 }
+BOOST_AUTO_TEST_CASE(v1_order_factory)
+{
+    using namespace coffee_machine::v1;
+
+    {
+        coffee_machine::v1::coffee_machine c{};
+
+        factory::orders order_factory{};
+        c.request(order_factory.create("coffee"));
+        c.request(order_factory.create("tea"));
+        c.start();
+    }
+    {
+        struct mock_beverage_factory : public factory::beverage
+        {
+            coffee_machine::v1::beverage::beverage* create() override
+            {
+                _called = true;
+                return nullptr;
+            }
+            bool _called{false};
+        };
+
+        factory::orders order_factory{};
+        mock_beverage_factory* mock = new mock_beverage_factory{};
+        order_factory.add(mock, "mock_beverage");
+
+        order_factory.create("mock_beverage");
+
+        BOOST_CHECK(mock->_called);
+    }
+}
 BOOST_AUTO_TEST_CASE(v1_order_state_observers)
 {
     using namespace coffee_machine::v1;
@@ -486,38 +518,6 @@ BOOST_AUTO_TEST_CASE(v1_order_state_observers)
         c.start();
 
         BOOST_CHECK_EQUAL(o._call_order, "s1p100f");
-    }
-}
-BOOST_AUTO_TEST_CASE(v1_order_factory)
-{
-    using namespace coffee_machine::v1;
-
-    {
-        coffee_machine::v1::coffee_machine c{};
-
-        factory::orders order_factory{};
-        c.request(order_factory.create("coffee"));
-        c.request(order_factory.create("tea"));
-        c.start();
-    }
-    {
-        struct mock_beverage_factory : public factory::beverage
-        {
-            coffee_machine::v1::beverage::beverage* create() override
-            {
-                _called = true;
-                return nullptr;
-            }
-            bool _called{false};
-        };
-
-        factory::orders order_factory{};
-        mock_beverage_factory* mock = new mock_beverage_factory{};
-        order_factory.add(mock, "mock_beverage");
-
-        order_factory.create("mock_beverage");
-
-        BOOST_CHECK(mock->_called);
     }
 }
 BOOST_AUTO_TEST_CASE(v2_recipes)
@@ -579,6 +579,35 @@ BOOST_AUTO_TEST_CASE(v2_orders)
 
     BOOST_CHECK("oo" == actual_calls);
 }
+BOOST_AUTO_TEST_CASE(v2_order_factory)
+{
+    using namespace coffee_machine::v2;
+    {
+        coffee_machine::v2::coffee_machine c{};
+        coffee_machine::v2::factory::orders order_factory{};
+
+        c.request(order_factory["coffee"]);
+        c.request(order_factory["tea"   ]);
+
+        c.start();
+    }
+    {
+        coffee_machine::v2::factory::orders order_factory{};
+        bool called{false};
+        order_factory["mock_order"] = [&]()
+        {
+            called = true;
+        };
+
+        auto order = order_factory["mock_order"];
+        // order has to be invoked explicitly
+        // since function given to order factory
+        // is invoked lazily
+        order();
+
+        BOOST_CHECK(called);
+    }
+}
 BOOST_AUTO_TEST_CASE(v2_order_state_observers)
 {
     using namespace coffee_machine::v2;
@@ -622,34 +651,5 @@ BOOST_AUTO_TEST_CASE(v2_order_state_observers)
         c.start();
 
         BOOST_CHECK_EQUAL("s2p50p100f", actual_calls);
-    }
-}
-BOOST_AUTO_TEST_CASE(v2_order_factory)
-{
-    using namespace coffee_machine::v2;
-    {
-        coffee_machine::v2::coffee_machine c{};
-        coffee_machine::v2::factory::orders order_factory{};
-
-        c.request(order_factory["coffee"]);
-        c.request(order_factory["tea"   ]);
-
-        c.start();
-    }
-    {
-        coffee_machine::v2::factory::orders order_factory{};
-        bool called{false};
-        order_factory["mock_order"] = [&]()
-        {
-            called = true;
-        };
-
-        auto order = order_factory["mock_order"];
-        // order has to be invoked explicitly
-        // since function given to order factory
-        // is invoked lazily
-        order();
-
-        BOOST_CHECK(called);
     }
 }
