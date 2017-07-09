@@ -1,6 +1,7 @@
 #include <boost/signals2.hpp>
 #include <functional>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -89,6 +90,50 @@ public:
     }
 private:
     v1::beverage::beverage* _beverage;
+};
+}
+namespace factory
+{
+class beverage
+{
+public:
+    virtual ~beverage() noexcept = default;
+    virtual v1::beverage::beverage* create() = 0;
+};
+class coffee : public beverage
+{
+public:
+    v1::beverage::beverage* create() override
+    {
+        return new v1::beverage::beverage(new recipe::coffee());
+    }
+};
+class tea : public beverage
+{
+public:
+    v1::beverage::beverage* create() override
+    {
+        return new v1::beverage::beverage(new recipe::tea());
+    }
+};
+class orders
+{
+public:
+    orders()
+    {
+        _factories["coffee"] = new factory::coffee();
+        _factories["tea"   ] = new factory::tea();
+    }
+    order::order* create(const std::string& beverage)
+    {
+        return new order::beverage(_factories[beverage]->create());
+    }
+    void add(factory::beverage* factory, const std::string name)
+        {
+            _factories.insert(std::make_pair(name, factory));
+        }
+private:
+    std::map<std::string, factory::beverage*> _factories;
 };
 }
 class order_state_observer
@@ -243,11 +288,12 @@ class coffee_machine
 {
 public:
     template<class func_sig>
-    using signal = typename signal_type<func_sig, keywords::mutex_type<dummy_mutex>>::type;
+    using signal = typename
+                   signal_type<func_sig, keywords::mutex_type<dummy_mutex>>::type;
 
     signal<void(int)> sig_started;
     signal<void(int)> sig_progress;
-    signal<void(   )> sig_finished;
+    signal<void()> sig_finished;
 
     void request(order::order order)
     {
@@ -407,6 +453,38 @@ BOOST_AUTO_TEST_CASE(v1_order_state_observers)
         c.start();
 
         BOOST_CHECK_EQUAL(o._call_order, "s1p100f");
+    }
+}
+BOOST_AUTO_TEST_CASE(v1_order_factory)
+{
+    using namespace coffee_machine::v1;
+
+    {
+        coffee_machine::v1::coffee_machine c{};
+
+        factory::orders order_factory{};
+        c.request(order_factory.create("coffee"));
+        c.request(order_factory.create("tea"));
+        c.start();
+    }
+    {
+        struct mock_beverage_factory : public factory::beverage
+        {
+            coffee_machine::v1::beverage::beverage* create() override
+            {
+                _called = true;
+                return nullptr;
+            }
+            bool _called{false};
+        };
+
+        factory::orders order_factory{};
+        mock_beverage_factory mock{};
+        order_factory.add(&mock, "mock_beverage");
+
+        order_factory.create("mock_beverage");
+
+        BOOST_CHECK(mock._called);
     }
 }
 BOOST_AUTO_TEST_CASE(v2_recipes)
