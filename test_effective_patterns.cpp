@@ -308,14 +308,10 @@ public:
             beverage::beverage{recipe::tea   } .prepare();
         };
     }
-    order::order create(const std::string& beverage)
-    {
-        return _factories[beverage];
-    }
-    void add(order::order order_func, const std::string name)
-    {
-        _factories.insert(std::make_pair(name, order_func));
-    }
+    order::order& operator[](const std::string& beverage)
+        {
+            return _factories[beverage];
+        }
 private:
     std::map<std::string, order::order> _factories;
 };
@@ -325,8 +321,8 @@ class coffee_machine
 {
 public:
     template<class func_sig>
-    using signal = typename
-                   signal_type<func_sig, keywords::mutex_type<dummy_mutex>>::type;
+    using signal =
+        typename signal_type<func_sig, keywords::mutex_type<dummy_mutex>>::type;
 
     signal<void(int)> sig_started;
     signal<void(int)> sig_progress;
@@ -635,20 +631,20 @@ BOOST_AUTO_TEST_CASE(v2_order_factory)
         coffee_machine::v2::coffee_machine c{};
         coffee_machine::v2::factory::orders order_factory{};
 
-        c.request(order_factory.create("coffee"));
-        c.request(order_factory.create("tea"));
+        c.request(order_factory["coffee"]);
+        c.request(order_factory["tea"   ]);
 
         c.start();
     }
     {
         coffee_machine::v2::factory::orders order_factory{};
         bool called{false};
-        order_factory.add([&]()
+        order_factory["mock_order"] = [&]()
         {
             called = true;
-        }, "mock_order");
+        };
 
-        auto order = order_factory.create("mock_order");
+        auto order = order_factory["mock_order"];
         // order has to be invoked explicitly
         // since function given to order factory
         // is invoked lazily
