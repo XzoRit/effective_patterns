@@ -124,14 +124,23 @@ public:
         _factories["coffee"] = new factory::coffee();
         _factories["tea"   ] = new factory::tea();
     }
+    ~orders()
+    {
+        for(auto it = _factories.begin(); it != _factories.end(); ++it)
+        {
+            delete it->second;
+            it->second = nullptr;
+        }
+        _factories.clear();
+    }
     order::order* create(const std::string& beverage)
     {
         return new order::beverage(_factories[beverage]->create());
     }
     void add(factory::beverage* factory, const std::string name)
-        {
-            _factories.insert(std::make_pair(name, factory));
-        }
+    {
+        _factories.insert(std::make_pair(name, factory));
+    }
 private:
     std::map<std::string, factory::beverage*> _factories;
 };
@@ -282,6 +291,34 @@ private:
 namespace order
 {
 using order = std::function<void()>;
+}
+namespace factory
+{
+class orders
+{
+public:
+    orders()
+    {
+        _factories["coffee"] = []()
+        {
+            beverage::beverage{recipe::coffee} .prepare();
+        };
+        _factories["tea"   ] = []()
+        {
+            beverage::beverage{recipe::tea   } .prepare();
+        };
+    }
+    order::order create(const std::string& beverage)
+    {
+        return _factories[beverage];
+    }
+    void add(order::order order_func, const std::string name)
+    {
+        _factories.insert(std::make_pair(name, order_func));
+    }
+private:
+    std::map<std::string, order::order> _factories;
+};
 }
 using namespace boost::signals2;
 class coffee_machine
@@ -479,12 +516,12 @@ BOOST_AUTO_TEST_CASE(v1_order_factory)
         };
 
         factory::orders order_factory{};
-        mock_beverage_factory mock{};
-        order_factory.add(&mock, "mock_beverage");
+        mock_beverage_factory* mock = new mock_beverage_factory{};
+        order_factory.add(mock, "mock_beverage");
 
         order_factory.create("mock_beverage");
 
-        BOOST_CHECK(mock._called);
+        BOOST_CHECK(mock->_called);
     }
 }
 BOOST_AUTO_TEST_CASE(v2_recipes)
@@ -589,5 +626,34 @@ BOOST_AUTO_TEST_CASE(v2_order_state_observers)
         c.start();
 
         BOOST_CHECK_EQUAL("s2p50p100f", actual_calls);
+    }
+}
+BOOST_AUTO_TEST_CASE(v2_order_factory)
+{
+    using namespace coffee_machine::v2;
+    {
+        coffee_machine::v2::coffee_machine c{};
+        coffee_machine::v2::factory::orders order_factory{};
+
+        c.request(order_factory.create("coffee"));
+        c.request(order_factory.create("tea"));
+
+        c.start();
+    }
+    {
+        coffee_machine::v2::factory::orders order_factory{};
+        bool called{false};
+        order_factory.add([&]()
+        {
+            called = true;
+        }, "mock_order");
+
+        auto order = order_factory.create("mock_order");
+        // order has to be invoked explicitly
+        // since function given to order factory
+        // is invoked lazily
+        order();
+
+        BOOST_CHECK(called);
     }
 }

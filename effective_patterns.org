@@ -50,7 +50,7 @@
 
 * orders
 - list of beverages
-- work of list
+- work off list
 
 * command
 
@@ -60,3 +60,10 @@
 - finished
 
 * observer
+
+* wiring
+- map string to prepare-command
+- create beverages
+- either coffee or tea
+
+* factory method
