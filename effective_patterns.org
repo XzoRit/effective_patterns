@@ -17,6 +17,9 @@
 - patterns and boost
 - conclusion
 
+* formal
+- [[https://en.wikipedia.org/wiki/Software_design_pattern][software design pattern]]
+
 * gof patterns
 - [[https://en.wikipedia.org/wiki/Software_design_pattern][design patterns]]
 - [[http://shop.oreilly.com/product/9780596007126.do?sortby=publicationDate][head first design patterns]]
@@ -25,45 +28,128 @@
 - [[https://sourcemaking.com/][sourcemaking]]
 
 * examples
-- abstract factory
+- strategy
 - chain
 - command
+- factory method
 - observer
-- strategy
-
-* boost.patterns
-- flyweight
-- state
 
 * coffeemachine
 - takes orders (coffee, tea)
 - visualizes progress
-- notifies when oders are ready
+- notifies when orders are ready
 - prints a receipt
 
-* recipe
-- heat water
+* coffee - tea
+- amount hot water
 - beverage powder
 - pour into cup
 
-* strategy
+* [[https://en.wikipedia.org/wiki/Strategy_pattern][strategy]]
 
 * orders
 - list of beverages
 - work off list
 
-* command
+* [[https://en.wikipedia.org/wiki/Command_pattern][command]]
 
 * wiring
 - map string to prepare-command
 - create beverages
 - either coffee or tea
 
-* factory method
+* [[https://en.wikipedia.org/wiki/Factory_method_pattern][factory method]]
 
 * progress
 - started preparing beverages
 - in progress
 - finished
 
-* observer
+* [[https://en.wikipedia.org/wiki/Observer_pattern][observer]]
+
+* [[http://www.boost.org/doc/libs/1_64_0/doc/html/signals2.html][boost.signals2]]
+
+* boost and patterns
+- todo: table
+
+* [[http://www.boost.org/doc/libs/1_64_0/libs/flyweight/doc/index.html][boost.flyweight]]
+
+* boost.state
+- [[http://www.boost.org/doc/libs/1_64_0/libs/statechart/doc/index.html][statechart]]
+- [[http://www.boost.org/doc/libs/1_64_0/libs/msm/doc/HTML/index.html][meta state machine]]
+- experimental: [[https://github.com/boost-experimental/sml][sml]]
+
+* main
+
+* analysis
+
+* pros and cons
+- flexibility (adaptability)
+- amount of code (complexity)
+- resource handling
+- compiletime / binary size
+
+* solid
+- single responsibility
+- open close
+- liskov
+- interface segregation
+- dependency injection
+
+* wiring mess
+- srp
+- many objects
+- wiring
+- factory
+- mess
+- no srp
+
+* [[https://github.com/boost-experimental/di][experimental-boost.di]]
+
+* observations
+
+* Peter Norvig
+"16 of 23 patterns have qualitatively simpler 
+implementation in Lisp or Dylan than in C++ 
+for at least some uses of each pattern"
+[[http://norvig.com/design-patterns/design-patterns.pdf][link]]
+
+* Paul Graham
+"I wonder if these patterns are not sometimes evidence of case (c),
+the human compiler, at work. When I see patterns in my programs, I
+consider it a sign of trouble. The shape of a program should reflect
+only the problem it needs to solve. Any other regularity in the code
+is a sign, to me at least, that I'm using abstractions that aren't
+powerful enough-- often that I'm generating by hand the expansions of
+some macro that I need to write"
+[[http://www.paulgraham.com/icad.html][link]]
+
+* patterns = crutches
+
+* language
+Christopher Alexander
+A Pattern Language
+
+* communication
+
+* uml
+it is not a requirement for a pattern to be visible in a class diagram
+
+* gof book
+2nd edition?
+
+* evolution
+- assembler
+- c
+- c++
+- c++11/14/...
+
+* lifecycle
+- discovered
+- published
+- test of time
+- adopted
+- disapears
+
+* poly c++
+- [[https://boost-experimental.github.io/di/concepts-driven-design-with-di/#/][concept driven design]]
