@@ -70,7 +70,11 @@
 * [[http://www.boost.org/doc/libs/1_64_0/doc/html/signals2.html][boost.signals2]]
 
 * boost and patterns
-- todo: table
+| factory        | abstract-factory factory-method  prototype                   |
+| flyweight      | factory          strategy        proxy      prototype        |
+| function       | chain            command         observer   strategy   state |
+| signals2       | chain            command         observer                    |
+| statechart/msm | command          strategy        observer                    |
 
 * [[http://www.boost.org/doc/libs/1_64_0/libs/flyweight/doc/index.html][boost.flyweight]]
 
