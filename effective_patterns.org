@@ -159,3 +159,8 @@ it is not a requirement for a pattern to be visible in a class diagram
 
 * poly c++
 - [[https://boost-experimental.github.io/di/concepts-driven-design-with-di/#/][concept driven design]]
+
+* remember
+- dont be a robot
+- use the language
+- use libraries
