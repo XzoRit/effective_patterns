@@ -135,6 +135,8 @@ Christopher Alexander
 A Pattern Language
 
 * communication
+- door
+- shelve
 
 * uml
 it is not a requirement for a pattern to be visible in a class diagram
