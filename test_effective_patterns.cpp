@@ -40,6 +40,66 @@ class tea : public recipe
     }
 };
 }
+namespace condiment
+{
+class condiment
+{
+public:
+    condiment()
+        : _next(nullptr)
+    {}
+    condiment(condiment* next)
+        : _next(next)
+    {}
+    virtual ~condiment()
+    {
+        delete _next;
+        _next = nullptr;
+    }
+    std::string description() const
+    {
+        if(_next) return this->on_description() + _next->description();
+        return this->on_description();
+    }
+    double price() const
+    {
+        if(_next) return this->on_price() + _next->price();
+        return this->on_price();
+    }
+private:
+    virtual std::string on_description() const = 0;
+    virtual double on_price() const = 0;
+    condiment* _next;
+};
+class sugar : public condiment
+{
+public:
+    using condiment::condiment;
+private:
+    std::string on_description() const override final
+    {
+        return "-sugar-";
+    }
+    double on_price() const override final
+    {
+        return 0.5;
+    }
+};
+class milk : public condiment
+{
+public:
+    using condiment::condiment;
+private:
+    std::string on_description() const override final
+    {
+        return "-milk-";
+    }
+    double on_price() const override final
+    {
+        return 1.0;
+    }
+};
+}
 namespace beverage
 {
 class beverage
@@ -413,6 +473,22 @@ BOOST_AUTO_TEST_CASE(v1_recipes)
 
     BOOST_CHECK(mocked_recipe->water_called);
     BOOST_CHECK(mocked_recipe->powder_called);
+}
+BOOST_AUTO_TEST_CASE(v1_condiments)
+{
+    using namespace coffee_machine::v1;
+
+    condiment::condiment* sugar = new condiment::sugar{};
+    condiment::condiment* double_sugar = new condiment::sugar{sugar};
+    condiment::condiment* double_sugar_milk = new condiment::milk{double_sugar};
+
+    const auto description = double_sugar_milk->description();
+    const auto price = double_sugar_milk->price();
+
+    delete double_sugar_milk;
+
+    BOOST_CHECK_EQUAL(description, "-milk--sugar--sugar-");
+    BOOST_CHECK(price == 2.0);
 }
 BOOST_AUTO_TEST_CASE(v1_orders)
 {
