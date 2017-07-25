@@ -47,6 +47,12 @@
 
 * [[https://en.wikipedia.org/wiki/Strategy_pattern][strategy]]
 
+* condiments
+- milk
+- sugar
+
+* [[https://en.wikipedia.org/wiki/Chain-of-responsibility_pattern][chain of responsibility]]
+
 * orders
 - list of beverages
 - work off list
@@ -82,8 +88,6 @@
 - [[http://www.boost.org/doc/libs/1_64_0/libs/statechart/doc/index.html][statechart]]
 - [[http://www.boost.org/doc/libs/1_64_0/libs/msm/doc/HTML/index.html][meta state machine]]
 - experimental: [[https://github.com/boost-experimental/sml][sml]]
-
-* main
 
 * analysis
 
