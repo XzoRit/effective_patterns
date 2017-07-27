@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+using namespace std::string_literals;
+
 namespace coffee_machine::v1
 {
 namespace recipe
@@ -326,6 +328,59 @@ const recipe tea
     }
 };
 }
+namespace condiment
+{
+struct condiment
+{
+void add(const condiment& next)
+{
+    if(_description)
+        _description = [this, next]()
+    {
+        return _description() + next._description();
+    };
+    else _description = next._description;
+    if(_price)
+        _price = [this, next]()
+    {
+        return _price() + next._price();
+    };
+    else _price = next._price;
+}
+auto description() const
+{
+    return _description();
+}
+auto price() const
+{
+    return _price();
+}
+std::function<std::string()> _description;
+std::function<double()> _price;
+};
+const condiment sugar
+{
+    []()
+    {
+        return "-sugar-";
+    },
+    []()
+    {
+        return 0.5;
+    }
+};
+const condiment milk
+{
+    []()
+    {
+        return "-milk-";
+    },
+    []()
+    {
+        return 1.0;
+    }
+};
+}
 namespace beverage
 {
 class beverage
@@ -625,6 +680,19 @@ BOOST_AUTO_TEST_CASE(v2_recipes)
     b.prepare();
 
     BOOST_CHECK("ab" == actual_calls);
+}
+BOOST_AUTO_TEST_CASE(v2_condiments)
+{
+    using namespace coffee_machine::v2;
+
+    condiment::condiment condiments{};
+
+    condiments.add(condiment::sugar);
+    BOOST_CHECK_EQUAL(condiments.description(), "-sugar-");
+
+    // condiments.add(condiment::milk);
+    // BOOST_REQUIRE(condiments._description);
+    // BOOST_CHECK_EQUAL(condiments.description(), "");
 }
 BOOST_AUTO_TEST_CASE(v2_orders)
 {
